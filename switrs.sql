@@ -649,17 +649,32 @@ BEGIN
     -- Create the materialized view with the conditional probability calculations
     EXECUTE format(
         'CREATE MATERIALIZED VIEW %I AS
-         SELECT %I AS value1, %I AS value2, 
-                COUNT(*)::FLOAT / (SELECT COUNT(*) FROM %I) AS joint_probability,
-                (COUNT(*)::FLOAT / (SELECT COUNT(*) FROM %I)) / 
-                (SELECT COUNT(*) FROM %I WHERE %I = value2) AS conditional_probability
+         SELECT %I AS value1, %I AS value2,
+                COUNT(*)::FLOAT / SUM(COUNT(*)) OVER (PARTITION BY %I) AS conditional_probability
          FROM %I
          GROUP BY %I, %I',
-        view_name, column1, column2, table_name, table_name, table_name, column2, table_name, column1, column2
+        view_name, column1, column2, column2, table_name, column1, column2
     );
 END;
 $$ LANGUAGE plpgsql;
 
+
+
+
+
+
+
+SELECT create_conditional_probability_mv('collisions', 'collision_severity', 'primary_collision_factor');
+
+SELECT create_conditional_probability_mv('collisions', 'hit_and_run', 'type_of_collision');
+
+SELECT create_conditional_probability_mv('collisions', 'weather_1', 'road_surface');
+
+SELECT create_conditional_probability_mv('collisions', 'lighting', 'control_device');
+
+SELECT create_conditional_probability_mv('parties', 'party_sobriety', 'party_drug_physical');
+
+SELECT create_conditional_probability_mv('victims', 'victim_degree_of_injury', 'victim_safety_equipment_1');
 
 
 
